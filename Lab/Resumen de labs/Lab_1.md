@@ -1,59 +1,37 @@
-
-
- 
-
-Read [](file:///mnt/disk/Ing.%20Sistemas/Septimo%20Semestre/1.%20IA/Lab/Lab_1.ipynb)
-
-Acá va el resumen de todo lo que se hizo en el cuadernillo:
-
----
-
-## Resumen del Laboratorio #1
+# Resumen del Laboratorio #1: Regresión Lineal Multivariable (ATP Matches)
 
 ### Objetivo
-Predecir la **duración en minutos** de partidos de tenis ATP usando **regresión lineal multivariable implementada desde cero** (sin sklearn para el modelo, solo NumPy).
+Desarrollar un modelo de **regresión lineal multivariable** desde cero (usando NumPy y Pandas) para predecir la **duración en minutos** de los partidos de tenis de la ATP, cumpliendo con los requisitos de un dataset con $n \ge 10$ características y $m \ge 10000$ registros.
 
-### Paso a paso
+### Dataset Utilizado
+Se seleccionó el dataset `atp_matches_till_2022.csv` de la carpeta `Datasets/1_ATP_matches_D/`, el cual contiene información detallada de partidos profesionales.
+- **Registros iniciales:** >180,000.
+- **Registros tras limpieza:** >80,000 (filtrando valores nulos en columnas críticas).
+- **Características ($n$):** 15 variables numéricas seleccionadas (edad, altura, aces, puntos de servicio, break points salvados, etc.).
 
-**1. Carga y exploración del dataset**
-- Se carga `atp_matches_till_2022.csv` (partidos de tenis ATP hasta 2022)
-- Se exploran dimensiones, estadísticas descriptivas y valores faltantes (`NaN`)
+### Paso a Paso del Desarrollo
 
-**2. Selección de features y limpieza**
-- Se eligen **21 variables numéricas** (ranking, edad, aces, doble faltas, puntos de servicio, break points, etc.) y **3 categóricas** (surface, tourney_level, round)
-- Variable objetivo (`target`): `minutes`
-- Se eliminan filas con datos faltantes (`dropna`)
+**1. Preprocesamiento con Pandas**
+- Carga del archivo CSV y selección de columnas numéricas relevantes para la duración del partido.
+- Eliminación de filas con valores faltantes (`dropna`) para asegurar la integridad del entrenamiento.
+- Separación de la variable objetivo (`minutes`) de las características.
 
-**3. One-Hot Encoding**
-- Las 3 columnas de texto se convierten a columnas binarias (0/1) con `pd.get_dummies`, generando **16 columnas one-hot**
-- Total de features: 21 numéricas + 16 one-hot = **37**
+**2. Normalización de Características**
+- Implementación de la función `featureNormalize` para aplicar escalado (Z-score normalization): $x_{norm} = \frac{x - \mu}{\sigma}$.
+- Esto es crítico para que el descenso por gradiente converja de manera eficiente dado que las escalas de "edad" y "puntos de servicio" son muy distintas.
 
-**4. Normalización (feature scaling)**
-- Se normalizan **solo las 21 numéricas** con z-score: $x_{norm} = \frac{x - \mu}{\sigma}$
-- Las columnas one-hot (ya son 0/1) se dejan sin tocar
-- Se guardan `mu` y `sigma` para reutilizar en inferencia
+**3. Implementación del Modelo (Desde Cero)**
+- **Función de Costo ($J$):** Implementación del Error Cuadrático Medio (MSE) para evaluar la precisión de los parámetros $	heta$.
+- **Descenso por Gradiente:** Algoritmo iterativo para actualizar los pesos $	heta$ minimizando la función de costo.
+- **Vectorización:** Uso de operaciones de matrices con NumPy para optimizar el rendimiento del cálculo.
 
-**5. Preparación de matrices**
-- Se agrega columna $x_0 = 1$ (bias/intercepto) → `x_b` con **38 columnas**
-- Se divide 80/20 en `x_train`/`x_test` con `train_test_split`
+**4. Entrenamiento y Optimización**
+- Configuración de hiperparámetros: $\alpha = 0.01$ e iteraciones = 1000.
+- Seguimiento del historial de costo para verificar la convergencia visualmente mediante una gráfica.
 
-**6. Modelo — 3 funciones implementadas a mano:**
+**5. Inferencia**
+- Creación de un flujo de inferencia que normaliza nuevos datos (usando $\mu$ y $\sigma$ del entrenamiento) antes de realizar la predicción.
+- Verificación de resultados comparando la predicción con el promedio real del dataset.
 
-| Función | Qué hace | Fórmula |
-|---|---|---|
-| `hipotesis` | Predicción | $h_\theta(x) = X_b \cdot \theta$ |
-| `costo` | Mide el error | $J(\theta) = \frac{1}{2m}\sum(h_\theta(x) - y)^2$ |
-| `gradient_descent` | Aprende $\theta$ | $\theta := \theta - \frac{\alpha}{m} X_b^T(X_b\theta - y)$ |
-
-**7. Entrenamiento**
-- Se ejecuta gradient descent con $\alpha = 0.01$ y 1000 iteraciones
-- Se grafica la convergencia de $J(\theta)$ para verificar que el costo baja
-
-**8. Inferencia**
-- Función `inferencia` que recibe un partido nuevo, normaliza las numéricas con los mismos `mu`/`sigma`, concatena las one-hot, y aplica la hipótesis
-- Se prueba con un partido inventado (Grand Slam, clay, QF) → **125.1 minutos**
-
-**9. Evaluación**
-- Se calculan métricas en el test set: **RMSE**, **MAE**, **R²**
-- Se grafica predicciones vs reales (scatter plot con línea diagonal de predicción perfecta)
-- Se compara contra `sklearn.LinearRegression` para validar que la implementación manual es correcta
+### Conclusiones
+El modelo logra aproximarse a la duración real de los partidos mediante el aprendizaje de las estadísticas de juego. La implementación manual permite entender profundamente el funcionamiento del descenso por gradiente y la importancia de la normalización en problemas multivariables.

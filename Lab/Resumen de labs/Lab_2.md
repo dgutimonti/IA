@@ -2,32 +2,58 @@
 
  
 
-Retrieving Notebook summary.
+Read [](file:///mnt/disk/Ing.%20Sistemas/Septimo%20Semestre/1.%20IA/Lab/Lab_1.ipynb)
 
-Read [](file:///mnt/disk/Ing.%20Sistemas/Septimo%20Semestre/1.%20IA/Lab/Lab_2.ipynb#1-1), lines 1 to 299
+Acá va el resumen de todo lo que se hizo en el cuadernillo:
 
-## Resumen del Laboratorio 2 — Regresión Logística
+---
+
+## Resumen del Laboratorio #1
 
 ### Objetivo
-Clasificación binaria sobre el dataset **KDD Cup 1999**: predecir si una conexión de red es **normal (0)** o un **ataque (1)** en un entorno militar simulado.
+Predecir la **duración en minutos** de partidos de tenis ATP usando **regresión lineal multivariable implementada desde cero** (sin sklearn para el modelo, solo NumPy).
 
-### Pipeline implementado (todo desde cero con NumPy)
+### Paso a paso
 
-| Etapa | Qué se hizo |
-|---|---|
-| **1. Carga y exploración** | Dataset con ~494K conexiones y 41 columnas. Se exploró la distribución de labels. |
-| **2. Binarización del target** | Se convirtió `label` en binario: `normal. → 0`, cualquier otro tipo de ataque → `1`. |
-| **3. Selección de features** | 38 numéricas + 3 categóricas (`protocol_type`, `service`, `flag`). |
-| **4. Limpieza** | Verificación y eliminación de NaN. |
-| **5. One-Hot Encoding** | `pd.get_dummies` con `drop_first=True` para las 3 categóricas. |
-| **6. Normalización** | Z-score manual ($\frac{x - \mu}{\sigma}$) solo sobre las columnas numéricas, preservando las dummies. |
-| **7. Bias column** | Se agregó $x_0 = 1$ al frente de la matriz de features. |
-| **8. Train/Test split** | 80/20 estratificado (`stratify=y`) con `random_state=42`. |
-| **9. Sigmoid** | $\sigma(z) = \frac{1}{1 + e^{-z}}$ — implementada y graficada. |
-| **10. Hipótesis** | $h_\theta(x) = \sigma(\theta^T x)$ |
-| **11. Función de costo** | Log-loss: $J(\theta) = -\frac{1}{m}\sum\left[y\log(h) + (1-y)\log(1-h)\right]$ con `np.clip` para estabilidad numérica. |
-| **12. Gradient Descent** | Manual, 1000 iteraciones con $\alpha = 0.1$. Se graficó la curva de convergencia de $J(\theta)$. |
-| **13. Evaluación en test** | Accuracy, Precision, Recall, F1, AUC-ROC y Matriz de Confusión. |
+**1. Carga y exploración del dataset**
+- Se carga `atp_matches_till_2022.csv` (partidos de tenis ATP hasta 2022)
+- Se exploran dimensiones, estadísticas descriptivas y valores faltantes (`NaN`)
 
-### En resumen
-Se construyó un clasificador de regresión logística **desde cero** (sin `sklearn.LogisticRegression`) para detectar intrusiones de red: desde la preparación de datos hasta la evaluación con métricas estándar. Las únicas herramientas de sklearn usadas fueron `train_test_split` para el split y `sklearn.metrics` para las métricas finales.
+**2. Selección de features y limpieza**
+- Se eligen **21 variables numéricas** (ranking, edad, aces, doble faltas, puntos de servicio, break points, etc.) y **3 categóricas** (surface, tourney_level, round)
+- Variable objetivo (`target`): `minutes`
+- Se eliminan filas con datos faltantes (`dropna`)
+
+**3. One-Hot Encoding**
+- Las 3 columnas de texto se convierten a columnas binarias (0/1) con `pd.get_dummies`, generando **16 columnas one-hot**
+- Total de features: 21 numéricas + 16 one-hot = **37**
+
+**4. Normalización (feature scaling)**
+- Se normalizan **solo las 21 numéricas** con z-score: $x_{norm} = \frac{x - \mu}{\sigma}$
+- Las columnas one-hot (ya son 0/1) se dejan sin tocar
+- Se guardan `mu` y `sigma` para reutilizar en inferencia
+
+**5. Preparación de matrices**
+- Se agrega columna $x_0 = 1$ (bias/intercepto) → `x_b` con **38 columnas**
+- Se divide 80/20 en `x_train`/`x_test` con `train_test_split`
+
+**6. Modelo — 3 funciones implementadas a mano:**
+
+| Función | Qué hace | Fórmula |
+|---|---|---|
+| `hipotesis` | Predicción | $h_\theta(x) = X_b \cdot \theta$ |
+| `costo` | Mide el error | $J(\theta) = \frac{1}{2m}\sum(h_\theta(x) - y)^2$ |
+| `gradient_descent` | Aprende $\theta$ | $\theta := \theta - \frac{\alpha}{m} X_b^T(X_b\theta - y)$ |
+
+**7. Entrenamiento**
+- Se ejecuta gradient descent con $\alpha = 0.01$ y 1000 iteraciones
+- Se grafica la convergencia de $J(\theta)$ para verificar que el costo baja
+
+**8. Inferencia**
+- Función `inferencia` que recibe un partido nuevo, normaliza las numéricas con los mismos `mu`/`sigma`, concatena las one-hot, y aplica la hipótesis
+- Se prueba con un partido inventado (Grand Slam, clay, QF) → **125.1 minutos**
+
+**9. Evaluación**
+- Se calculan métricas en el test set: **RMSE**, **MAE**, **R²**
+- Se grafica predicciones vs reales (scatter plot con línea diagonal de predicción perfecta)
+- Se compara contra `sklearn.LinearRegression` para validar que la implementación manual es correcta
