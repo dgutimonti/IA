@@ -1,5 +1,7 @@
 0.Machine Learning Drive /datasets/chineseMNIST.csv
 0.Machine Learning Drive /datasets/chinese-mnist/dataset/chinese_mnist.tfrecords
 Datasets/
+venv/
+.idea/
 
 
