@@ -1,0 +1,1 @@
+https://github.com/dgutimonti/IA/blob/main/2.Segudno_Parcial/11.parejas.ipynb
